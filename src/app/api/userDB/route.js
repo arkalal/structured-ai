@@ -8,33 +8,58 @@ const openAi = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-function extractSentiment(text) {
-  // Example: find sentiment from the analyzed text
-  const sentimentMatch = text.match(/sentiment:\s*(\w+)/i);
-  return sentimentMatch ? sentimentMatch[1] : "NEUTRAL";
-}
-
-function extractComplaints(text) {
-  // Example: find a list of complaints from the analyzed text
-  const complaintsMatch = text.match(/complaints:\s*([\w\s,]+)/i);
-  return complaintsMatch
-    ? complaintsMatch[1].split(",").map((s) => s.trim())
-    : [];
-}
-
-function extractSwitchedTo(text) {
-  // Example: find any switch intentions from the analyzed text
-  const switchedToMatch = text.match(/switched to:\s*(\w+)/i);
-  return switchedToMatch ? switchedToMatch[1] : null;
-}
+const functions = [
+  {
+    name: "analyze_feedback",
+    description:
+      "Analyze customer feedback for sentiment, complaints, and potential product switch intentions.",
+    parameters: {
+      type: "object",
+      properties: {
+        feedback: {
+          type: "string",
+          description: "Customer feedback text to be analyzed.",
+        },
+        sentiment: {
+          type: "string",
+          description: "Sentiment of the feedback",
+          enum: ["POSITIVE", "NEGATIVE", "NEUTRAL"],
+        },
+        complaints: {
+          type: "array",
+          description: "List of complaints identified from the feedback",
+          items: {
+            type: "string",
+            enum: [
+              "COMPLICATED",
+              "DIFFICULT_SETUP",
+              "EXPENSIVE",
+              "INTEGRATION_ISSUES",
+              "POOR_CUSTOMER_SERVICE",
+              "USER_INTERFACE",
+              "BUGS",
+            ],
+          },
+        },
+        switchedTo: {
+          type: "string",
+          description:
+            "Product the customer is considering switching to, if any.",
+        },
+      },
+      required: ["feedback", "sentiment", "complaints", "switchedTo"], // Specify which properties are required for the function to execute
+    },
+  },
+];
 
 export async function POST(req) {
+  let client;
   try {
     const { dbUri } = await req.json();
 
     console.log("DBUri", dbUri);
 
-    const client = new MongoClient(dbUri);
+    client = new MongoClient(dbUri);
 
     await client.connect();
     console.log("req", req);
@@ -48,25 +73,34 @@ export async function POST(req) {
         messages: [
           {
             role: "system",
-            content: `You are a helpful assistant to analyze a unstructured data into structured with proper categories. Analyze the feedback data: ${feedback.feedback}`,
+            content: `You are a helpful assistant to analyze a unstructured data into structured with proper categories based on the functions. Analyze the feedback data: ${feedback.feedback}`,
           },
         ],
         model: "gpt-4-1106-preview",
         temperature: 0.9,
         max_tokens: 200,
+        functions: functions,
       });
 
-      await connectMongoDB();
-      const newFeedback = new Feedback({
-        feedback: feedback.feedback,
-        sentiment: extractSentiment(response.choices[0].message.content),
-        complaints: extractComplaints(response.choices[0].message.content),
-        switchedTo: extractSwitchedTo(response.choices[0].message.content),
-      });
+      console.log("response", response.choices[0].message.function_call);
 
-      await newFeedback.save();
+      if (response.choices[0] && response.choices[0].message.function_call) {
+        const args = JSON.parse(
+          response.choices[0].message.function_call.arguments
+        );
+
+        await connectMongoDB();
+        const newFeedback = new Feedback({
+          name: feedback.name,
+          feedback: feedback.feedback,
+          sentiment: args.sentiment || "NEUTRAL",
+          complaints: args.complaints || [],
+          switchedTo: args.switchedTo || null,
+        });
+
+        await newFeedback.save();
+      }
     }
-
     return NextResponse.json(
       { message: "Connected to MongoDB and data processed" },
       { status: 200 }
@@ -74,5 +108,8 @@ export async function POST(req) {
   } catch (error) {
     console.log(error);
     return NextResponse.json({ message: "Error Connecting" }, { status: 400 });
+  } finally {
+    await client.close();
+    console.log("MongoDB connection closed");
   }
 }

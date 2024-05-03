@@ -15,7 +15,7 @@ const Home = () => {
       console.log("DBUri", dbUri);
 
       if (res.status === 200) {
-        alert("Connected to MongoDB");
+        console.log("Connected to MongoDB and data processed");
       }
     } catch (error) {
       console.log(error);
