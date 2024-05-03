@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import axios from "../../axios/api";
+import FeedbackList from "../FeedbackList/FeedbackList";
 
 const Home = () => {
   const [dbUri, setDBUri] = useState("");
@@ -31,6 +32,8 @@ const Home = () => {
         />
         <button type="submit">Connect DB</button>
       </form>
+
+      <FeedbackList />
     </div>
   );
 };

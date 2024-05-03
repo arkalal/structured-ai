@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 
 const feedbackSchema = new Schema({
-  name: { type: String, required: true },
+  name: { type: String },
   feedback: { type: String, required: true },
   sentiment: { type: String },
   complaints: [{ type: String }],
