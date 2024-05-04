@@ -1,5 +1,28 @@
 .Operations {
   margin-top: 20px;
+  margin-left: 20px;
+
+  h2 {
+    margin-bottom: 20px;
+  }
+
+  .connecting {
+    color: #ff0000;
+  }
+
+  .connected {
+    color: #00ff00;
+  }
+
+  .enteruri {
+    color: #808080;
+  }
+
+  p {
+    margin-top: 6px;
+    margin-left: 10px;
+    font-weight: bold;
+  }
 
   form {
     display: flex;
