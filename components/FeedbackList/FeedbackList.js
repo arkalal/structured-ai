@@ -22,10 +22,10 @@ const FeedbackList = () => {
           <table>
             <thead>
               <tr>
-                <th>Feedback</th>
-                <th>Sentiment</th>
-                <th>Complaints</th>
-                <th>Switched To</th>
+                <th>CUSTOMER_REVIEW</th>
+                <th>SENTIMENT</th>
+                <th>COMPLAINTS</th>
+                <th>SWITCHED_TO</th>
               </tr>
             </thead>
             <tbody>

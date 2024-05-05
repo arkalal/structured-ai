@@ -39,9 +39,13 @@ const Operations = () => {
         <button type="submit">Connect DB</button>
       </form>
       {Loading === true && (
-        <p className={styles.connecting}>Connecting DB...</p>
+        <p className={styles.connecting}>
+          Connecting DB and Categorizing Data...🤖📈🔍
+        </p>
       )}
-      {Loading === false && <p className={styles.connected}>Db Connected ✅</p>}
+      {Loading === false && (
+        <p className={styles.connected}>Db Connected and Data Categorized ✅</p>
+      )}
       {Loading === null && (
         <p className={styles.enteruri}>Enter a DB URI to connect 🧑🏻‍💻 </p>
       )}
